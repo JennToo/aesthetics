@@ -12,9 +12,13 @@ use rp_pico as bsp;
 use bsp::hal::{
     clocks::{init_clocks_and_plls, Clock},
     pac,
+    pio::PIOExt,
     sio::Sio,
+    timer::Timer,
     watchdog::Watchdog,
 };
+use smart_leds::{SmartLedsWrite, RGB8};
+use ws2812_pio::Ws2812;
 
 #[entry]
 fn main() -> ! {
@@ -23,7 +27,6 @@ fn main() -> ! {
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
     let sio = Sio::new(pac.SIO);
 
-    // External high-speed crystal on the pico board is 12Mhz
     let external_xtal_freq_hz = 12_000_000u32;
     let clocks = init_clocks_and_plls(
         external_xtal_freq_hz,
@@ -38,6 +41,7 @@ fn main() -> ! {
     .unwrap();
 
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
+    let timer = Timer::new(pac.TIMER, &mut pac.RESETS);
 
     let pins = bsp::Pins::new(
         pac.IO_BANK0,
@@ -46,12 +50,26 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    let mut led_pin = pins.led.into_push_pull_output();
+    let (mut pio, sm0, _, _, _) = pac.PIO0.split(&mut pac.RESETS);
+
+    let mut neopixel_driver = Ws2812::new(
+        pins.gpio4.into_mode(),
+        &mut pio,
+        sm0,
+        clocks.peripheral_clock.freq(),
+        timer.count_down(),
+    );
+
+    let mut debug_led_pin = pins.led.into_push_pull_output();
 
     loop {
-        led_pin.set_high().unwrap();
+        neopixel_driver
+            .write(core::iter::repeat(RGB8::new(255, 255, 255)).take(8))
+            .unwrap();
+
+        debug_led_pin.set_high().unwrap();
         delay.delay_ms(500);
-        led_pin.set_low().unwrap();
+        debug_led_pin.set_low().unwrap();
         delay.delay_ms(500);
     }
 }
