@@ -20,6 +20,8 @@ use ws2812_pio::Ws2812;
 
 mod effects;
 
+use effects::Effect;
+
 #[entry]
 fn main() -> ! {
     let mut pac = pac::Peripherals::take().unwrap();
@@ -61,8 +63,12 @@ fn main() -> ! {
     );
 
     let mut effector = effects::Effector::new(neopixel_driver, delay);
+    let effect_script = [(
+        Effect::SolidColor(effects::MAGENTA),
+        effects::FRAME_DURATION,
+    )];
 
     loop {
-        effector.solid_color(effects::MAGENTA, 16_000);
+        effector.run_script(&effect_script);
     }
 }
