@@ -55,7 +55,7 @@ fn main() -> ! {
     let (mut pio, sm0, _, _, _) = pac.PIO0.split(&mut pac.RESETS);
 
     let neopixel_driver = Ws2812::new(
-        pins.gpio4.into_mode(),
+        pins.gpio0.into_mode(),
         &mut pio,
         sm0,
         clocks.peripheral_clock.freq(),
