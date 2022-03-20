@@ -1,4 +1,4 @@
-use embedded_hal::blocking::delay::DelayUs;
+use embedded_hal::blocking::delay::DelayMs;
 use smart_leds::{SmartLedsWrite, RGB, RGB8};
 
 pub const MAGENTA: RGB8 = RGB {
@@ -10,23 +10,24 @@ pub const BLACK: RGB8 = RGB { r: 0, g: 0, b: 0 };
 
 const LED_COUNT: usize = 8 * 2 * 4;
 type Frame = [RGB8; LED_COUNT];
-pub const FRAME_DURATION: u32 = 16_000;
+pub const FRAME_DURATION: u32 = 16;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Effect {
     SolidColor(RGB8),
+    AlternatingColors(RGB8, RGB8),
 }
 
 pub type Duration = u32;
 
 pub type EffectScript = [(Effect, Duration)];
 
-pub struct Effector<Driver: SmartLedsWrite, Delayer: DelayUs<u32>> {
+pub struct Effector<Driver: SmartLedsWrite, Delayer: DelayMs<u32>> {
     led_driver: Driver,
     delay: Delayer,
 }
 
-impl<Driver: SmartLedsWrite<Color = RGB8, Error = ()>, Delayer: DelayUs<u32>>
+impl<Driver: SmartLedsWrite<Color = RGB8, Error = ()>, Delayer: DelayMs<u32>>
     Effector<Driver, Delayer>
 {
     pub fn new(led_driver: Driver, delay: Delayer) -> Self {
@@ -42,7 +43,7 @@ impl<Driver: SmartLedsWrite<Color = RGB8, Error = ()>, Delayer: DelayUs<u32>>
                 effect.render_frame(&mut frame);
                 self.led_driver.write(frame.iter().cloned()).unwrap();
 
-                self.delay.delay_us(FRAME_DURATION);
+                self.delay.delay_ms(FRAME_DURATION);
                 remaining_duration = remaining_duration.saturating_sub(FRAME_DURATION);
             }
         }
@@ -55,6 +56,15 @@ impl Effect {
             Effect::SolidColor(color) => {
                 for element in frame.iter_mut() {
                     *element = color;
+                }
+            }
+            Effect::AlternatingColors(color1, color2) => {
+                for (i, element) in frame.iter_mut().enumerate() {
+                    if i % 2 == 0 {
+                        *element = color1;
+                    } else {
+                        *element = color2;
+                    }
                 }
             }
         }

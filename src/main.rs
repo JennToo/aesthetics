@@ -63,10 +63,16 @@ fn main() -> ! {
     );
 
     let mut effector = effects::Effector::new(neopixel_driver, delay);
-    let effect_script = [(
-        Effect::SolidColor(effects::MAGENTA),
-        effects::FRAME_DURATION,
-    )];
+    let effect_script = [
+        (
+            Effect::AlternatingColors(effects::BLACK, effects::MAGENTA),
+            1000,
+        ),
+        (
+            Effect::AlternatingColors(effects::MAGENTA, effects::BLACK),
+            1000,
+        ),
+    ];
 
     loop {
         effector.run_script(&effect_script);
