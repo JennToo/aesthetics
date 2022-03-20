@@ -64,14 +64,17 @@ fn main() -> ! {
 
     let mut effector = effects::Effector::new(neopixel_driver, delay);
     let effect_script = [
+        (Effect::SolidColor(effects::BLACK), 1000),
         (
             Effect::AlternatingColors(effects::BLACK, effects::MAGENTA),
             1000,
         ),
+        (Effect::Fade, 500),
         (
             Effect::AlternatingColors(effects::MAGENTA, effects::BLACK),
             1000,
         ),
+        (Effect::SolidColor(effects::BLACK), 1000),
     ];
 
     loop {
